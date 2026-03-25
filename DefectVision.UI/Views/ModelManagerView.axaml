@@ -1,0 +1,91 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DefectVision.UI.ViewModels"
+             xmlns:core="using:DefectVision.Core.Models"
+             x:Class="DefectVision.UI.Views.ModelManagerView"
+             x:DataType="vm:ModelManagerViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- 工具栏 -->
+        <Border Grid.Row="0" Background="#F5F5F5" Padding="12,8" BorderBrush="#DDD" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="📥 导入模型" Command="{Binding ImportModelCommand}" />
+                <Button Content="🚀 导出 TensorRT" Command="{Binding ExportTensorRTCommand}" />
+                <Button Content="📊 对比选中" Command="{Binding CompareModelsCommand}" />
+                <Button Content="⏪ 回滚" Command="{Binding RollbackCommand}" />
+            </StackPanel>
+        </Border>
+
+        <!-- 用 ListBox 代替 DataGrid，更简单更可靠 -->
+        <ListBox Grid.Row="1" ItemsSource="{Binding ModelVersions}"
+                 SelectedItem="{Binding SelectedVersion}" Margin="12">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="core:ModelVersion">
+                    <Border Padding="12,8" Margin="0,2" BorderBrush="#E0E0E0"
+                            BorderThickness="1" CornerRadius="4" Background="White">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+
+                            <!-- 行0：名称 + 状态 -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Bold" />
+                                <Border Padding="6,2" CornerRadius="3" Background="#E3F2FD">
+                                    <TextBlock Text="{Binding Status}" FontSize="10" Foreground="#1565C0" />
+                                </Border>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="0" Grid.Column="1"
+                                       Text="{Binding CreatedAt, StringFormat=yyyy-MM-dd HH:mm}"
+                                       FontSize="11" Foreground="#888" VerticalAlignment="Center" />
+
+                            <!-- 行1：指标 -->
+                            <StackPanel Grid.Row="1" Grid.ColumnSpan="2"
+                                        Orientation="Horizontal" Spacing="16" Margin="0,4,0,0">
+                                <TextBlock FontSize="12">
+                                    <Run Text="mAP@50: " Foreground="#888" />
+                                    <Run Text="{Binding Metrics.MapAP50, StringFormat=P1}" FontWeight="Bold" Foreground="#1B5E20" />
+                                </TextBlock>
+                                <TextBlock FontSize="12">
+                                    <Run Text="mAP@50-95: " Foreground="#888" />
+                                    <Run Text="{Binding Metrics.MapAP5095, StringFormat=P1}" FontWeight="Bold" />
+                                </TextBlock>
+                                <TextBlock FontSize="12">
+                                    <Run Text="精确率: " Foreground="#888" />
+                                    <Run Text="{Binding Metrics.Precision, StringFormat=P1}" FontWeight="Bold" Foreground="#0D47A1" />
+                                </TextBlock>
+                                <TextBlock FontSize="12">
+                                    <Run Text="召回率: " Foreground="#888" />
+                                    <Run Text="{Binding Metrics.Recall, StringFormat=P1}" FontWeight="Bold" Foreground="#E65100" />
+                                </TextBlock>
+                                <TextBlock FontSize="12">
+                                    <Run Text="F1: " Foreground="#888" />
+                                    <Run Text="{Binding Metrics.F1Score, StringFormat=F3}" FontWeight="Bold" />
+                                </TextBlock>
+                            </StackPanel>
+
+                            <!-- 行2：模型路径 -->
+                            <TextBlock Grid.Row="2" Grid.ColumnSpan="2"
+                                       Text="{Binding ModelPath}" FontSize="10"
+                                       Foreground="#AAA" Margin="0,4,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- 底部操作栏（针对选中的模型） -->
+        <Border Grid.Row="2" Background="#F5F5F5" Padding="12,8" BorderBrush="#DDD" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                <Button Content="✅ 激活选中模型" Command="{Binding ActivateSelectedCommand}"
+                        Background="#1B5E20" Foreground="White" Padding="16,6" />
+                <Button Content="📊 评估选中模型" Command="{Binding EvaluateSelectedCommand}"
+                        Padding="16,6" />
+                <Button Content="📦 归档选中模型" Command="{Binding ArchiveSelectedCommand}"
+                        Padding="16,6" />
+                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"
+                           Margin="16,0,0,0" FontSize="12" Foreground="#666" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

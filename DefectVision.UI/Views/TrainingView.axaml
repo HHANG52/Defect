@@ -1,0 +1,156 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DefectVision.UI.ViewModels"
+             x:Class="DefectVision.UI.Views.TrainingView"
+             x:DataType="vm:TrainingViewModel">
+
+    <Grid ColumnDefinitions="320,*">
+
+        <!-- Left: Training config -->
+        <Border Grid.Column="0" Background="#FAFAFA" Padding="12" BorderBrush="#DDD" BorderThickness="0,0,1,0">
+            <ScrollViewer>
+                <StackPanel Spacing="12">
+
+                    <TextBlock x:Name="LblTrainingConfig" FontSize="16" FontWeight="Bold" />
+
+                    <!-- Base model: TextBox + Browse -->
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="LblBaseModel" FontWeight="SemiBold" FontSize="12" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Grid.Column="0" Text="{Binding SelectedBaseModel}"
+                                     Watermark="yolo11m.pt" FontSize="12" />
+                                                      <Button Grid.Column="1" x:Name="BtnBrowseModel" Margin="4,0,0,0"
+                                    Click="OnBrowseModelClick" MinWidth="40" />
+                        </Grid>
+                        <TextBlock x:Name="LblModelHint" FontSize="10" Foreground="#888" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Image size -->
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="LblImgSize" FontWeight="SemiBold" FontSize="12" />
+                        <NumericUpDown Value="{Binding ImgSize}" Minimum="320" Maximum="2048"
+                                       Increment="64" FormatString="F0" />
+                    </StackPanel>
+
+                    <!-- Batch -->
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="LblBatch" FontWeight="SemiBold" FontSize="12" />
+                        <NumericUpDown Value="{Binding BatchSize}" Minimum="1" Maximum="64"
+                                       Increment="1" FormatString="F0" />
+                    </StackPanel>
+
+                    <!-- Epochs -->
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="LblEpochs" FontWeight="SemiBold" FontSize="12" />
+                        <NumericUpDown Value="{Binding Epochs}" Minimum="10" Maximum="1000"
+                                       Increment="10" FormatString="F0" />
+                    </StackPanel>
+
+                    <!-- LR -->
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="LblLR" FontWeight="SemiBold" FontSize="12" />
+                        <NumericUpDown Value="{Binding LearningRate}" Minimum="0.0001"
+                                       Maximum="0.1" Increment="0.001" FormatString="F4" />
+                    </StackPanel>
+
+                    <!-- Patience -->
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="LblPatience" FontWeight="SemiBold" FontSize="12" />
+                        <NumericUpDown Value="{Binding Patience}" Minimum="0" Maximum="200"
+                                       Increment="5" FormatString="F0" />
+                    </StackPanel>
+
+                    <!-- Device -->
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="LblDevice" FontWeight="SemiBold" FontSize="12" />
+                        <TextBox Text="{Binding Device}" />
+                    </StackPanel>
+
+                    <Separator />
+
+                    <!-- ★ Use Click event as fallback -->
+                    <Button x:Name="BtnStartTrain" HorizontalAlignment="Stretch"
+                            Click="OnStartTrainClick"
+                            FontSize="14" FontWeight="Bold"
+                            Background="#1B5E20" Foreground="White" Padding="0,10" />
+
+                    <Button x:Name="BtnStopTrain" HorizontalAlignment="Stretch"
+                            Click="OnStopTrainClick"
+                            IsVisible="{Binding IsTraining}"
+                            Background="#B71C1C" Foreground="White" />
+
+                    <Button x:Name="BtnResumeTrain" HorizontalAlignment="Stretch"
+                            Click="OnResumeTrainClick"
+                            IsEnabled="{Binding CanResume}" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Right: Training monitor -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+
+            <Border Grid.Row="0" Background="#F5F5F5" Padding="16,12">
+                <Grid ColumnDefinitions="*,*,*,*,*,*">
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                        <TextBlock x:Name="LblProgress" FontSize="11" Foreground="#888" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding ProgressText}" FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock Text="mAP@50" FontSize="11" Foreground="#888" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding MapAP50Text}" FontSize="18" FontWeight="Bold"
+                                   Foreground="#1B5E20" HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                        <TextBlock x:Name="LblPrecision" FontSize="11" Foreground="#888" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding PrecisionText}" FontSize="18" FontWeight="Bold"
+                                   Foreground="#0D47A1" HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                        <TextBlock x:Name="LblRecall" FontSize="11" Foreground="#888" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding RecallText}" FontSize="18" FontWeight="Bold"
+                                   Foreground="#E65100" HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4" HorizontalAlignment="Center">
+                        <TextBlock Text="Box Loss" FontSize="11" Foreground="#888" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding BoxLossText}" FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="5" HorizontalAlignment="Center">
+                        <TextBlock x:Name="LblElapsed" FontSize="11" Foreground="#888" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding ElapsedText}" FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                <ProgressBar Grid.Row="0" Value="{Binding TrainingProgress}" Maximum="100"
+                             Height="6" Margin="16,8" />
+
+                            <Border Grid.Row="1" Margin="16,0,16,8" Background="#1E1E1E" CornerRadius="4">
+                    <Grid RowDefinitions="Auto,*">
+                        <Border Grid.Row="0" Background="#333" Padding="8,4" CornerRadius="4,4,0,0">
+                            <TextBlock x:Name="LblTrainLog" Foreground="White" FontSize="12" />
+                        </Border>
+                        <TextBox Grid.Row="1"
+                                 x:Name="LogTextBox"
+                                 Text="{Binding TrainingLog}"
+                                 IsReadOnly="True"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 FontFamily="Consolas,Courier New,monospace"
+                                 FontSize="11"
+                                 Foreground="#CCC"
+                                 Background="#1E1E1E"
+                                 BorderThickness="0"
+                                 Padding="8"
+                                 CaretBrush="White" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Expander Grid.Row="2" x:Name="ExpanderEpoch" Margin="16,0,16,8" />
+        </Grid>
+    </Grid>
+</UserControl>

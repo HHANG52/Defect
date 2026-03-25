@@ -1,0 +1,52 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DefectVision.UI.Views.Dialogs.ProjectSetupDialog"
+        Title="Setup"
+        Width="600" Height="520"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        x:Name="ThisDialog">
+
+    <Grid RowDefinitions="*,Auto" Margin="16">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Spacing="16">
+
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="LblProjectName" Text="Project Name" FontWeight="Bold" />
+                    <TextBox x:Name="ProjectNameBox" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="LblPythonDll" Text="Python DLL Path" FontWeight="Bold" />
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox x:Name="PythonDllBox" Grid.Column="0" />
+                        <Button x:Name="BtnBrowseDll" Grid.Column="1" Content="..." Margin="4,0,0,0"
+                                Click="BrowsePythonDll_Click" MinWidth="40" />
+                    </Grid>
+                    <TextBlock x:Name="LblDllHint" FontSize="11" Foreground="#888" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="LblClasses" Text="Defect Classes" FontWeight="Bold" />
+                    <TextBlock x:Name="LblClassesHint" FontSize="11" Foreground="#888" />
+                    <TextBox x:Name="ClassesBox" AcceptsReturn="True" Height="150"
+                             FontFamily="Consolas,monospace" FontSize="12" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="LblDevice" Text="Default Device" FontWeight="Bold" />
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <RadioButton x:Name="DeviceGpu" Content="GPU (0)" IsChecked="True" />
+                        <RadioButton x:Name="DeviceCpu" Content="CPU" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="8" Margin="0,16,0,0">
+            <Button x:Name="BtnCancel" Click="Cancel_Click" MinWidth="80" />
+            <Button x:Name="BtnOK" Click="OK_Click" MinWidth="80" Classes="accent" />
+        </StackPanel>
+    </Grid>
+</Window>

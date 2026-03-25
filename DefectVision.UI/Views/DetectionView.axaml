@@ -1,0 +1,130 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DefectVision.UI.ViewModels"
+             xmlns:core="using:DefectVision.Core.Models"
+             x:Class="DefectVision.UI.Views.DetectionView"
+             x:DataType="vm:DetectionViewModel">
+
+    <Grid ColumnDefinitions="3*,Auto,1*">
+
+        <!-- 左侧：图片 -->
+        <Grid Grid.Column="0" Background="#1E1E1E">
+
+            <Border VerticalAlignment="Top" ZIndex="10" Background="#CC333333"
+                    Padding="8,4" CornerRadius="0,0,4,4">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="选择图片" Command="{Binding BrowseSourceCommand}"
+                            Background="Transparent" Foreground="White" FontSize="12" />
+                    <Button Content="开始检测" Command="{Binding RunDetectionCommand}"
+                            Background="#1B5E20" Foreground="White" FontSize="12" FontWeight="Bold"
+                            Padding="12,4" />
+
+                    <Border Width="1" Background="#555" Margin="4,2" />
+
+                    <CheckBox Content="SAHI 切图" IsChecked="{Binding UseSahi}"
+                              Foreground="White" FontSize="12" />
+
+                    <Border Width="1" Background="#555" Margin="4,2" />
+
+                    <TextBlock VerticalAlignment="Center" Foreground="#AAA" FontSize="11" Text="置信度:" />
+                    <NumericUpDown Value="{Binding Confidence}" Minimum="0.05" Maximum="0.95"
+                                   Increment="0.05" FormatString="F2" Width="100" FontSize="11" />
+
+                    <Border Width="1" Background="#555" Margin="4,2" />
+
+                    <Button Content="◀" Command="{Binding PrevImageCommand}"
+                            Background="Transparent" Foreground="White" />
+                    <TextBlock Text="{Binding ImagePositionText}" Foreground="White"
+                               VerticalAlignment="Center" FontSize="12" />
+                    <Button Content="▶" Command="{Binding NextImageCommand}"
+                            Background="Transparent" Foreground="White" />
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="ImageContainer" Margin="0,40,0,24" ClipToBounds="True"
+                    Background="Transparent"
+                    PointerWheelChanged="Image_PointerWheelChanged"
+                    PointerPressed="Image_PointerPressed"
+                    PointerMoved="Image_PointerMoved"
+                    PointerReleased="Image_PointerReleased">
+                <Canvas x:Name="DetectionCanvas">
+                    <Image Source="{Binding CurrentImage}" Stretch="None" />
+                </Canvas>
+            </Border>
+
+            <Border VerticalAlignment="Bottom" ZIndex="10" Background="#80000000" Padding="8,4">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Foreground="#AAA" FontSize="11" Text="{Binding CurrentImagePath}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Foreground="#AAA" FontSize="11">
+                        <Run Text="耗时: " />
+                        <Run Text="{Binding InferenceTimeText}" Foreground="#4FC3F7" />
+                    </TextBlock>
+                    <TextBlock Foreground="#888" FontSize="11" Text="滚轮缩放 | 左键拖拽 | 右键重置" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <GridSplitter Grid.Column="1" Width="4" Background="#CCC" />
+
+        <!-- 右侧：检测结果 -->
+        <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto">
+
+            <Border Grid.Row="0" Background="#E3F2FD" Padding="8,6">
+                <TextBlock FontSize="13" FontWeight="Bold" Foreground="#1565C0">
+                    <Run Text="检测结果 (" />
+                    <Run Text="{Binding DetectionCount}" />
+                    <Run Text=")" />
+                </TextBlock>
+            </Border>
+
+            <!-- 用 ListBox 替代 DataGrid -->
+            <ListBox Grid.Row="1" ItemsSource="{Binding DetectionList}" FontSize="11">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="core:DetectedObject">
+                        <Grid ColumnDefinitions="60,55,50,50,50,50,55" Margin="2">
+                            <TextBlock Grid.Column="0" Text="{Binding ClassName}" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1" Text="{Binding Score, StringFormat=F3}" Foreground="#1B5E20" />
+                            <TextBlock Grid.Column="2" Text="{Binding X, StringFormat=F0}" Foreground="#888" />
+                            <TextBlock Grid.Column="3" Text="{Binding Y, StringFormat=F0}" Foreground="#888" />
+                            <TextBlock Grid.Column="4" Text="{Binding Width, StringFormat=F0}" Foreground="#888" />
+                            <TextBlock Grid.Column="5" Text="{Binding Height, StringFormat=F0}" Foreground="#888" />
+                            <TextBlock Grid.Column="6" Text="{Binding Area}" Foreground="#888" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- 统计与导出 -->
+            <StackPanel Grid.Row="2" Margin="8" Spacing="4">
+                <!-- 列表头标签 -->
+                <Grid ColumnDefinitions="60,55,50,50,50,50,55" Margin="2,0,2,4">
+                    <TextBlock Grid.Column="0" Text="类别" FontSize="10" Foreground="#999" FontWeight="Bold" />
+                    <TextBlock Grid.Column="1" Text="置信度" FontSize="10" Foreground="#999" FontWeight="Bold" />
+                    <TextBlock Grid.Column="2" Text="X" FontSize="10" Foreground="#999" FontWeight="Bold" />
+                    <TextBlock Grid.Column="3" Text="Y" FontSize="10" Foreground="#999" FontWeight="Bold" />
+                    <TextBlock Grid.Column="4" Text="宽" FontSize="10" Foreground="#999" FontWeight="Bold" />
+                    <TextBlock Grid.Column="5" Text="高" FontSize="10" Foreground="#999" FontWeight="Bold" />
+                    <TextBlock Grid.Column="6" Text="面积" FontSize="10" Foreground="#999" FontWeight="Bold" />
+                </Grid>
+                <Separator />
+                <Border Background="#FFF3E0" Padding="8" CornerRadius="4">
+                    <StackPanel Spacing="2">
+                        <TextBlock FontSize="12" FontWeight="SemiBold">
+                            <Run Text="缺陷图片: " />
+                            <Run Text="{Binding DefectImageCount}" Foreground="#E65100" FontWeight="Bold" />
+                            <Run Text=" / " />
+                            <Run Text="{Binding TotalImageCount}" />
+                        </TextBlock>
+                        <TextBlock FontSize="12">
+                            <Run Text="总缺陷数: " />
+                            <Run Text="{Binding TotalDefectCount}" Foreground="#B71C1C" FontWeight="Bold" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+                <Button Content="导出检测报告" HorizontalAlignment="Stretch"
+                        Command="{Binding ExportReportCommand}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

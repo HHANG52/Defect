@@ -1,0 +1,219 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:DefectVision.UI.ViewModels"
+             x:Class="DefectVision.UI.Views.AnnotationView"
+             x:DataType="vm:AnnotationViewModel">
+
+    <Grid ColumnDefinitions="220,*,280">
+
+        <!-- ===== Left ===== -->
+        <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto,Auto">
+
+            <Border Grid.Row="0" Background="#E3F2FD" Padding="8,6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock x:Name="LblImageList" FontWeight="Bold" FontSize="13"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1" x:Name="BtnImport" FontSize="11"
+                            Command="{Binding ImportImagesCommand}" Padding="8,2" />
+                </Grid>
+            </Border>
+
+            <ListBox Grid.Row="1" ItemsSource="{Binding ImageList}"
+                     SelectedItem="{Binding SelectedImage}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ImageListItem">
+                        <Grid ColumnDefinitions="Auto,*,Auto" Margin="2">
+                            <Ellipse Grid.Column="0" Width="8" Height="8" Margin="0,0,6,0"
+                                     VerticalAlignment="Center"
+                                     Fill="{Binding StatusColor}" />
+                            <TextBlock Grid.Column="1" Text="{Binding FileName}"
+                                       FontSize="11" TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="{Binding AnnotationCount}"
+                                       FontSize="10" Foreground="#888"
+                                       VerticalAlignment="Center" Margin="4,0,0,0" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Border Grid.Row="2" Padding="8,4" Background="#F5F5F5">
+                <StackPanel Spacing="4">
+                    <TextBlock FontSize="11">
+                        <Run x:Name="RunLabeledPrefix" />
+                        <Run Text="{Binding LabeledCount}" FontWeight="Bold" />
+                        <Run Text=" / " />
+                        <Run Text="{Binding TotalCount}" />
+                    </TextBlock>
+                    <ProgressBar Value="{Binding LabelProgress}" Maximum="100" Height="4" />
+                </StackPanel>
+            </Border>
+
+            <!-- ★ Class list: use ListBox so user can click to select ★ -->
+            <Border Grid.Row="3" Padding="8" Background="#FAFAFA" BorderBrush="#DDD" BorderThickness="0,1,0,0">
+                <StackPanel Spacing="4">
+                    <TextBlock x:Name="LblDefectClasses" FontWeight="Bold" FontSize="12" />
+
+                    <ListBox ItemsSource="{Binding ClassList}"
+                             SelectedItem="{Binding SelectedClassItem}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="0"
+                             MinHeight="30">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ClassDisplayItem">
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,1" Height="24">
+                                    <Border Grid.Column="0" Width="14" Height="14"
+                                            CornerRadius="2" Margin="0,0,6,0"
+                                            Background="{Binding Color}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                               FontSize="12" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Shortcut}"
+                                               FontSize="10" Foreground="#999"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Button x:Name="BtnAddClass" FontSize="11" HorizontalAlignment="Stretch"
+                            Command="{Binding AddClassCommand}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===== Center ===== -->
+        <Grid Grid.Column="1" Background="#1E1E1E">
+
+            <Border VerticalAlignment="Top" ZIndex="10" Background="#CC333333"
+                    Padding="8,4" CornerRadius="0,0,4,4">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <RadioButton x:Name="RbRect" GroupName="Tool"
+                                 IsChecked="{Binding IsRectTool}"
+                                 Foreground="White" FontSize="12" />
+                    <RadioButton x:Name="RbPolygon" GroupName="Tool"
+                                 IsChecked="{Binding IsPolygonTool}"
+                                 Foreground="White" FontSize="12" />
+                    <RadioButton x:Name="RbPan" GroupName="Tool"
+                                 IsChecked="{Binding IsPanTool}"
+                                 Foreground="White" FontSize="12" />
+
+                    <Border Width="1" Background="#555" Margin="8,2" />
+
+                    <Button x:Name="BtnUndo" Command="{Binding UndoCommand}"
+                            Background="Transparent" Foreground="White" FontSize="12" />
+                    <Button x:Name="BtnRedo" Command="{Binding RedoCommand}"
+                            Background="Transparent" Foreground="White" FontSize="12" />
+                    <Button x:Name="BtnDeleteSel" Command="{Binding DeleteSelectedCommand}"
+                            Background="Transparent" Foreground="#FF6B6B" FontSize="12" />
+
+                    <Border Width="1" Background="#555" Margin="8,2" />
+
+                    <TextBlock VerticalAlignment="Center" Foreground="#AAA" FontSize="11">
+                        <Run x:Name="RunCurrentClass" />
+                        <Run Text="{Binding SelectedClassName}" Foreground="#4FC3F7" FontWeight="Bold" />
+                    </TextBlock>
+
+                    <Border Width="1" Background="#555" Margin="8,2" />
+
+                    <TextBlock x:Name="TxtToolHint" VerticalAlignment="Center"
+                               Foreground="#888" FontSize="11" />
+                </StackPanel>
+            </Border>
+
+            <Border x:Name="CanvasContainer" Margin="0,36,0,24" ClipToBounds="True"
+                    Background="Transparent"
+                    PointerPressed="Canvas_PointerPressed"
+                    PointerMoved="Canvas_PointerMoved"
+                    PointerReleased="Canvas_PointerReleased"
+                    PointerWheelChanged="Canvas_PointerWheelChanged">
+                <Canvas x:Name="AnnotationCanvas">
+                    <Image x:Name="CanvasImage" Source="{Binding CurrentImageSource}"
+                           Stretch="None" />
+                </Canvas>
+            </Border>
+
+            <Border VerticalAlignment="Bottom" ZIndex="10" Background="#80000000" Padding="8,4">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Foreground="#AAA" FontSize="11">
+                        <Run x:Name="RunFileLabel" />
+                        <Run Text="{Binding CurrentFileName}" />
+                    </TextBlock>
+                    <TextBlock Foreground="#AAA" FontSize="11">
+                        <Run x:Name="RunSizeLabel" />
+                        <Run Text="{Binding ImageSizeText}" />
+                    </TextBlock>
+                    <TextBlock Foreground="#AAA" FontSize="11">
+                        <Run x:Name="RunZoomLabel" />
+                        <Run Text="{Binding ZoomPercentText}" />
+                    </TextBlock>
+                    <TextBlock x:Name="TxtToolMode" Foreground="#4FC3F7" FontSize="11" Margin="16,0,0,0" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===== Right ===== -->
+        <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto">
+
+            <Border Grid.Row="0" Background="#E8F5E9" Padding="8,6">
+                <TextBlock FontSize="13" FontWeight="Bold" Foreground="#2E7D32">
+                    <Run x:Name="RunAnnotListPrefix" />
+                    <Run Text="{Binding CurrentAnnotations.Count}" />
+                    <Run Text=")" />
+                </TextBlock>
+            </Border>
+
+            <ListBox Grid.Row="1" ItemsSource="{Binding CurrentAnnotations}"
+                     SelectedItem="{Binding SelectedAnnotation}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:AnnotationDisplayItem">
+                        <Border Padding="6,4" BorderBrush="#EEE" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                                <Border Grid.Column="0" Grid.RowSpan="2"
+                                        Width="12" Height="12" CornerRadius="2"
+                                        Background="{Binding ClassColor}" Margin="0,0,8,0"
+                                        VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Grid.Row="0"
+                                           Text="{Binding ClassName}" FontWeight="SemiBold"
+                                           FontSize="12" />
+                                <TextBlock Grid.Column="1" Grid.Row="1"
+                                           Text="{Binding BBoxText}" FontSize="10"
+                                           Foreground="#888" />
+                                <Button Grid.Column="2" Grid.RowSpan="2"
+                                        Content="X" FontSize="10"
+                                        Background="Transparent" Foreground="#CC0000"
+                                        Command="{Binding $parent[ListBox].((vm:AnnotationViewModel)DataContext).DeleteAnnotationCommand}"
+                                        CommandParameter="{Binding}"
+                                        VerticalAlignment="Center" Padding="4,2" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+             <StackPanel Grid.Row="2" Spacing="4" Margin="8">
+              <TextBlock Text="{Binding StatusMessage}" FontSize="11"
+                           Foreground="#1565C0" TextWrapping="Wrap"
+                           IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           Margin="0,0,0,4" />
+                 <Button x:Name="BtnMarkComplete" HorizontalAlignment="Stretch"
+                        Command="{Binding MarkCompletedCommand}" />
+                <Button x:Name="BtnSaveAnnotation" HorizontalAlignment="Stretch"
+                        Command="{Binding SaveAnnotationCommand}" />
+                <Separator Margin="0,4" />
+                <Button x:Name="BtnExportYolo" HorizontalAlignment="Stretch"
+                        Command="{Binding ExportDatasetCommand}" />
+                <Button x:Name="BtnImportYolo" HorizontalAlignment="Stretch"
+                        Command="{Binding ImportYoloCommand}" />
+                <Separator Margin="0,4" />
+                <Button x:Name="BtnImportLabelMe" HorizontalAlignment="Stretch"
+                        Click="OnImportLabelMeClick"
+                        Background="#1565C0" Foreground="White" />
+                                 <Button x:Name="BtnImportCustomJson" HorizontalAlignment="Stretch"
+                        Click="OnImportCustomJsonClick"
+                        Background="#6A1B9A" Foreground="White" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>
