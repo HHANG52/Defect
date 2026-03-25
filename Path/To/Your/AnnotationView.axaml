@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/AvaloniaUI" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="YourNamespace.AnnotationView"
+             x:Name="AnnotationView">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="250"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Sidebar -->
+        <StackPanel Grid.Column="0" Background="LightGray">
+            <TextBlock Text="Images" FontWeight="Bold"/>
+            <ListBox x:Name="ImageList"/>
+            <TextBlock Text="Progress" FontWeight="Bold"/>
+            <ProgressBar x:Name="ProgressBar"/>
+            <TextBlock Text="Defect Classes" FontWeight="Bold"/>
+            <ListBox x:Name="DefectClasses"/>
+        </StackPanel>
+
+        <!-- Center Area -->
+        <Grid Grid.Column="1">
+            <ToolBar>
+                <Button x:Name="DrawButton" Content="Draw"/>
+                <Button x:Name="EraseButton" Content="Erase"/>
+                <Separator/>
+                <Button x:Name="ImportButton" Content="Import"/>
+                <Button x:Name="ExportButton" Content="Export"/>
+            </ToolBar>
+            <Canvas x:Name="DrawingCanvas" Background="White"/>
+            <StatusBar>
+                <TextBlock Text="Status: Ready"/>
+            </StatusBar>
+        </Grid>
+
+        <!-- Right Panel -->
+        <StackPanel Grid.Column="2" Background="LightGray">
+            <TextBlock Text="Annotations" FontWeight="Bold"/>
+            <ListBox x:Name="AnnotationsList"/>
+            <TextBlock Text="Actions" FontWeight="Bold"/>
+            <StackPanel>
+                <Button x:Name="SaveButton" Content="Save"/>
+                <Button x:Name="DeleteButton" Content="Delete"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>
