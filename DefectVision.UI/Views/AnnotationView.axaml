@@ -1,52 +1,51 @@
-<UserControl x:Class="DefectVision.UI.Views.AnnotationView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:DefectVision.UI.Views"
-             xmlns:controls="clr-namespace:YourNamespace.Controls"  
-             xmlns:styles="clr-namespace:YourNamespace.Styles">
-
-    <UserControl.Resources>
-        <ResourceDictionary>
-            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                <Setter Property="Margin" Value="5" />
-                <Setter Property="Padding" Value="10" />
-                <Setter Property="FontSize" Value="14" />
-            </Style>
-            <Style TargetType="TextBlock">
-                <Setter Property="FontSize" Value="16" />
-                <Setter Property="FontWeight" Value="SemiBold" />
-                <Setter Property="Margin" Value="0,0,0,10" />
-            </Style>
-        </ResourceDictionary>
-    </UserControl.Resources>
-
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-
-        <StackPanel Grid.Row="0" Orientation="Vertical" HorizontalAlignment="Center" Margin="10">
-            <TextBlock Text="Annotation View" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="250"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Left Panel -->
+        <StackPanel Grid.Column="0">
+            <Button Command="{Binding ImportImagesCommand}" Content="Import Images"/>  
+            <ItemsControl ItemsSource="{Binding ImageList}">
+                <Image Source="{Binding SelectedImage}"/>
+            </ItemsControl>
+            <TextBlock Text="Labeled Count: {Binding LabeledCount}"/>
+            <TextBlock Text="Total Count: {Binding TotalCount}"/>
+            <ProgressBar Value="{Binding LabelProgress}"/>
+            <ComboBox ItemsSource="{Binding ClassList}" SelectedItem="{Binding SelectedClassItem}"/>
+            <Button Command="{Binding AddClassCommand}" Content="Add Class"/>  
         </StackPanel>
-
-        <ItemsControl Grid.Row="1" ItemsSource="{Binding Annotations}" Margin="10">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Border Margin="5" BorderBrush="Gray" BorderThickness="1" CornerRadius="5" Padding="10">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Title}" FontWeight="Bold" />
-                            <TextBlock Text="{Binding Description}" />
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
-            <Button Content="Add Annotation" Command="{Binding AddAnnotationCommand}" />
-            <Button Content="Delete Selected" Command="{Binding DeleteSelectedCommand}" />
+        
+        <!-- Center Canvas -->
+        <Canvas Grid.Column="1" Background="White"
+                PointerPressed="Canvas_PointerPressed"
+                PointerMoved="Canvas_PointerMoved"
+                PointerReleased="Canvas_PointerReleased"
+                PointerWheelChanged="Canvas_PointerWheelChanged">
+            <ToolBar>
+                <Button Command="{Binding IsRectTool}" Content="Rectangle"/>
+                <Button Command="{Binding IsPolygonTool}" Content="Polygon"/>
+                <Button Command="{Binding IsPanTool}" Content="Pan"/>
+                <Button Command="{Binding UndoCommand}" Content="Undo"/>
+                <Button Command="{Binding RedoCommand}" Content="Redo"/>
+                <Button Command="{Binding DeleteSelectedCommand}" Content="Delete"/>
+            </ToolBar>
+            <TextBlock Text="Zoom: {Binding ZoomPercentText}"/>
+            <ItemsControl ItemsSource="{Binding CurrentAnnotations}"/>
+        </Canvas>
+        <StatusBar Grid.Column="1" Content="{Binding StatusMessage}"/>
+        
+        <!-- Right Panel -->
+        <StackPanel Grid.Column="2">
+            <ItemsControl ItemsSource="{Binding CurrentAnnotations}"/>
+            <Button Command="{Binding MarkCompletedCommand}" Content="Mark Completed"/>
+            <Button Command="{Binding SaveAnnotationCommand}" Content="Save Annotation"/>
+            <Button Command="{Binding ExportDatasetCommand}" Content="Export Dataset"/>
+            <Button Command="{Binding ImportYoloCommand}" Content="Import Yolo"/>
+            <Button Command="{Binding DeleteAnnotationCommand}" Content="Delete Annotation"/>
         </StackPanel>
     </Grid>
 </UserControl>
