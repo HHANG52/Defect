@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="PanelLightBlue">#E3F2FD</Color>
+    <SolidColorBrush x:Key="PanelLightBlueBrush" Color="{StaticResource PanelLightBlue}"/>
+
+    <Color x:Key="TextSecondary">#888</Color>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondary}"/>
+
+    <Color x:Key="PanelLightGray">#F5F5F5</Color>
+    <SolidColorBrush x:Key="PanelLightGrayBrush" Color="{StaticResource PanelLightGray}"/>
+
+    <Color x:Key="PanelExtraLightGray">#FAFAFA</Color>
+    <SolidColorBrush x:Key="PanelExtraLightGrayBrush" Color="{StaticResource PanelExtraLightGray}"/>
+
+    <Color x:Key="BorderLightGray">#DDD</Color>
+    <SolidColorBrush x:Key="BorderLightGrayBrush" Color="{StaticResource BorderLightGray}"/>
+
+    <Color x:Key="TextTertiary">#999</Color>
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="{StaticResource TextTertiary}"/>
+
+    <Color x:Key="CanvasBackground">#1E1E1E</Color>
+    <SolidColorBrush x:Key="CanvasBackgroundBrush" Color="{StaticResource CanvasBackground}"/>
+
+    <Color x:Key="ToolbarBackground">#CC333333</Color>
+    <SolidColorBrush x:Key="ToolbarBackgroundBrush" Color="{StaticResource ToolbarBackground}"/>
+
+    <Color x:Key="TextLight">White</Color>
+    <SolidColorBrush x:Key="TextLightBrush" Color="{StaticResource TextLight}"/>
+
+    <Color x:Key="Separator">#555</Color>
+    <SolidColorBrush x:Key="SeparatorBrush" Color="{StaticResource Separator}"/>
+
+    <Color x:Key="DeleteButtonForeground">#FF6B6B</Color>
+    <SolidColorBrush x:Key="DeleteButtonForegroundBrush" Color="{StaticResource DeleteButtonForeground}"/>
+
+    <Color x:Key="TextMuted">#AAA</Color>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMuted}"/>
+
+    <Color x:Key="Highlight">#4FC3F7</Color>
+    <SolidColorBrush x:Key="HighlightBrush" Color="{StaticResource Highlight}"/>
+
+    <Color x:Key="InfoBarBackground">#80000000</Color>
+    <SolidColorBrush x:Key="InfoBarBackgroundBrush" Color="{StaticResource InfoBarBackground}"/>
+
+    <Color x:Key="PanelLightGreen">#E8F5E9</Color>
+    <SolidColorBrush x:Key="PanelLightGreenBrush" Color="{StaticResource PanelLightGreen}"/>
+
+    <Color x:Key="TextGreen">#2E7D32</Color>
+    <SolidColorBrush x:Key="TextGreenBrush" Color="{StaticResource TextGreen}"/>
+
+    <Color x:Key="BorderExtraLightGray">#EEE</Color>
+    <SolidColorBrush x:Key="BorderExtraLightGrayBrush" Color="{StaticResource BorderExtraLightGray}"/>
+
+    <Color x:Key="DeleteButtonRed">#CC0000</Color>
+    <SolidColorBrush x:Key="DeleteButtonRedBrush" Color="{StaticResource DeleteButtonRed}"/>
+
+    <Color x:Key="ButtonBlue">#1565C0</Color>
+    <SolidColorBrush x:Key="ButtonBlueBrush" Color="{StaticResource ButtonBlue}"/>
+
+    <Color x:Key="ButtonPurple">#6A1B9A</Color>
+    <SolidColorBrush x:Key="ButtonPurpleBrush" Color="{StaticResource ButtonPurple}"/>
+</ResourceDictionary>

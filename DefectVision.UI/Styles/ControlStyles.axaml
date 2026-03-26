@@ -1,0 +1,75 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="https://github.com/projektanker/icons.avalonia">
+
+    <!-- TextBlock Styles -->
+    <Style Selector="TextBlock.h1">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style Selector="TextBlock.secondary">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+    </Style>
+
+    <Style Selector="TextBlock.muted">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+    </Style>
+
+    <!-- Panel Styles -->
+    <Style Selector="Border.panel-header">
+        <Setter Property="Padding" Value="8,6" />
+    </Style>
+
+    <Style Selector="Border.panel-footer">
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Background" Value="{StaticResource PanelLightGrayBrush}" />
+    </Style>
+
+    <!-- 选择框按钮样式 -->
+    <Style Selector="RadioButton.tool-button,Button.tool-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Width" Value="60" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_Root"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+                    <ContentPresenter Name="PartContentPresenter"
+                                      Content="{TemplateBinding Content}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="RadioButton.tool-button:pointerover /template/ Border#PART_Root,Button.tool-button:pointerover /template/ Border#PART_Root">
+        <Setter Property="Background" Value="#33FFFFFF" />
+    </Style>
+
+    <Style Selector="RadioButton.tool-button:checked /template/ Border#PART_Root">
+        <Setter Property="Background" Value="{StaticResource HighlightBrush}" />
+    </Style>
+    <!-- 按钮文本居中 -->
+    <Style Selector="RadioButton.tool-button TextBlock,Button.tool-button TextBlock">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+    </Style>
+    <!-- 按钮激活样式 -->
+
+    <!-- 引入的NuGet的icon样式 用来选择匹配 i:Icon  -->
+    <Style Selector="i|Icon.icon">
+        <Setter Property="Width" Value="80"></Setter>
+        <Setter Property="Margin" Value="0 5 0 0"></Setter>
+    </Style>
+</Styles>

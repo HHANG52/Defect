@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace DefectVision.Core.Models
@@ -47,7 +47,8 @@ namespace DefectVision.Core.Models
     public enum AnnotationType
     {
         BoundingBox,
-        Polygon
+        Polygon,
+        Polyline
     }
 
     /// <summary>归一化矩形（YOLO 格式：中心点 + 宽高）</summary>

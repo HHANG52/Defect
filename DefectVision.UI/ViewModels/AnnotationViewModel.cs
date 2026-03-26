@@ -46,7 +46,7 @@ namespace DefectVision.UI.ViewModels
         // ===== 标注工具 =====
         [ObservableProperty] private bool _isRectTool = true;
         [ObservableProperty] private bool _isPolygonTool;
-        [ObservableProperty] private bool _isPanTool;
+        [ObservableProperty] private bool _isPolylineTool;
         [ObservableProperty] private string _selectedClassName = "defect";
 
         [ObservableProperty] private string _statusMessage = "";
@@ -553,7 +553,63 @@ namespace DefectVision.UI.ViewModels
                 Id = ann.Id,
                 ClassName = className,
                 ClassColor = classColor,
-                BBoxText = $"多边形 ({w:F0}×{h:F0})"
+                BBoxText = $"描边 ({w:F0}×{h:F0})"
+            });
+
+            _undoStack.Push(new UndoAction { Type = UndoType.Add, AnnotationId = ann.Id });
+            _redoStack.Clear();
+
+            _annotationService.SaveAnnotation(_currentAnnotation);
+
+            if (_selectedImage != null)
+                _selectedImage.AnnotationCount = _currentAnnotation.Annotations.Count;
+        }
+
+        public void AddPolylineAnnotation(List<Point> polylinePoints)
+        {
+            if (_currentAnnotation == null || ImageWidth <= 0 || ImageHeight <= 0 || polylinePoints.Count < 2) return;
+
+            string className = SelectedClassName;
+            string classColor = "#FF0000";
+
+            if (_selectedClassItem != null)
+            {
+                className = _selectedClassItem.Name;
+                classColor = _selectedClassItem.Color;
+            }
+            else
+            {
+                var cls = _project?.Classes.FirstOrDefault(c => c.Id == SelectedClassId);
+                if (cls != null)
+                {
+                    className = cls.Name;
+                    classColor = cls.Color;
+                }
+            }
+
+            var ann = new Annotation
+            {
+                ClassId = SelectedClassId,
+                ClassName = className,
+                Type = AnnotationType.Polyline,
+                Polygon = polylinePoints.Select(p => 
+                    new NormalizedPoint 
+                    { 
+                        X = (float)(p.X / ImageWidth), 
+                        Y = (float)(p.Y / ImageHeight) 
+                    }).ToList()
+            };
+
+            _currentAnnotation.Annotations.Add(ann);
+            _currentAnnotation.Status = AnnotationStatus.InProgress;
+
+            var (minX, minY, w, h) = GetPolygonBoundingBox(polylinePoints);
+            CurrentAnnotations.Add(new AnnotationDisplayItem
+            {
+                Id = ann.Id,
+                ClassName = className,
+                ClassColor = classColor,
+                BBoxText = $"折线 ({w:F0}×{h:F0})"
             });
 
             _undoStack.Push(new UndoAction { Type = UndoType.Add, AnnotationId = ann.Id });

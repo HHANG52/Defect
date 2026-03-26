@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Input;
 using DefectVision.UI.ViewModels;
 
@@ -64,21 +64,21 @@ namespace DefectVision.UI.Behaviors
                     case Key.R:
                         annotationVm.IsRectTool = true;
                         annotationVm.IsPolygonTool = false;
-                        annotationVm.IsPanTool = false;
+                        annotationVm.IsPolylineTool = false;
                         e.Handled = true;
                         break;
 
                     case Key.P:
                         annotationVm.IsRectTool = false;
                         annotationVm.IsPolygonTool = true;
-                        annotationVm.IsPanTool = false;
+                        annotationVm.IsPolylineTool = false;
                         e.Handled = true;
                         break;
 
-                    case Key.V:
+                    case Key.L:
                         annotationVm.IsRectTool = false;
                         annotationVm.IsPolygonTool = false;
-                        annotationVm.IsPanTool = true;
+                        annotationVm.IsPolylineTool = true;
                         e.Handled = true;
                         break;
 

@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
@@ -18,13 +19,19 @@ namespace DefectVision.UI.Views
     {
         private bool _isDrawingRect;
         private bool _isDrawingPolygon;
+        private bool _isDrawingPolyline;
         private bool _isPanning;
         private Point _startPoint;
         private Point _lastPanPoint;
         private Rectangle _currentRect;
 
-        private readonly List<Point> _freehandPoints = new List<Point>();
+        // 描边点集 自由手绘点集 (用于 Polygon 模式)
+        private readonly List<Point> _freehandPoints = [];
         private Polyline _freehandLine;
+        // 折线绘制点 点对点绘制点集 (用于 Polyline 模式)
+        private readonly List<Point> _activePoints = []; 
+        // 用于显示“橡皮筋”预览
+        private Line _rubberBandLine;
 
         private double _scale = 1.0;
         private double _offsetX, _offsetY; // image offset in container coords
@@ -72,13 +79,9 @@ namespace DefectVision.UI.Views
             RunLabeledPrefix.Text = "\u5DF2\u6807\u6CE8: ";
             LblDefectClasses.Text = "\uD83C\uDFF7 \u7F3A\u9677\u7C7B\u522B (\u70B9\u51FB\u9009\u62E9)";
             BtnAddClass.Content = "+ \u6DFB\u52A0\u7C7B\u522B";
-            RbRect.Content = "\u25A1 \u77E9\u5F62\u6846";
-            RbPolygon.Content = "\u25C7 \u591A\u8FB9\u5F62(\u62D6\u62FD)";
-            RbPan.Content = "\u270B \u79FB\u52A8";
-            BtnUndo.Content = "\u21A9 \u64A4\u9500";
-            BtnRedo.Content = "\u21AA \u91CD\u505A";
-            BtnDeleteSel.Content = "\uD83D\uDDD1 \u5220\u9664";
-            RunCurrentClass.Text = "\u5F53\u524D\u7C7B\u522B: ";
+            // BtnUndo.Content = null; // We use Path + TextBlock in XAML now
+            // BtnRedo.Content = null;
+            // BtnDeleteSel.Content = null;
             TxtToolHint.Text = "\u6EDA\u8F6E\u7F29\u653E | \u53F3\u952E\u5E73\u79FB | 1-9 \u5207\u6362";
             RunFileLabel.Text = "\u6587\u4EF6: ";
             RunSizeLabel.Text = "\u5C3A\u5BF8: ";
@@ -102,7 +105,7 @@ namespace DefectVision.UI.Views
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    CancelFreehand();
+                    CancelAllDrawing();
                     FitImageToView();
                     RedrawAnnotations();
                 });
@@ -264,14 +267,13 @@ namespace DefectVision.UI.Views
             Control shape = null;
             Point labelPos = new Point(0, 0);
 
-            // 绘制多边形 (关键修复点)
+            // 绘制多边形/描边
             if (rawData != null && rawData.Type == AnnotationType.Polygon && rawData.Polygon != null &&
                 rawData.Polygon.Count > 2)
             {
                 var screenPoints = new List<Point>();
                 foreach (var pt in rawData.Polygon)
                 {
-                    // 先还原为图片像素坐标，再转为屏幕坐标
                     double px = pt.X * vm.ImageWidth;
                     double py = pt.Y * vm.ImageHeight;
                     screenPoints.Add(ImageToScreen(px, py));
@@ -287,8 +289,29 @@ namespace DefectVision.UI.Views
                 };
                 labelPos = screenPoints[0];
             }
+            // 绘制折线
+            else if (rawData != null && rawData.Type == AnnotationType.Polyline && rawData.Polygon != null &&
+                     rawData.Polygon.Count > 1)
+            {
+                var screenPoints = new List<Point>();
+                foreach (var pt in rawData.Polygon)
+                {
+                    double px = pt.X * vm.ImageWidth;
+                    double py = pt.Y * vm.ImageHeight;
+                    screenPoints.Add(ImageToScreen(px, py));
+                }
+
+                shape = new Polyline
+                {
+                    Points = screenPoints,
+                    Stroke = strokeBrush,
+                    StrokeThickness = 2,
+                    IsHitTestVisible = false
+                };
+                labelPos = screenPoints[0];
+            }
             // 绘制矩形 (回退逻辑) ---
-            else
+            else if (rawData != null && rawData.Type == AnnotationType.BoundingBox)
             {
                 var text = ann.BBoxText.Trim('(', ')');
                 var parts = text.Split(',');
@@ -344,9 +367,20 @@ namespace DefectVision.UI.Views
         {
             var props = e.GetCurrentPoint(CanvasContainer).Properties;
 
-            // Right click = pan
+            // 优先判定右键取消绘制
             if (props.IsRightButtonPressed)
             {
+                // 如果当前正在“点对点”绘制（集合里有记录点），右键直接取消当前所有临时线段
+                if (_activePoints.Count > 0)
+                {
+                    CancelAllDrawing();
+                    SetToolMode("");
+                    // 消耗掉这个事件，不触发后续的“右键平移”逻辑
+                    e.Handled = true; 
+                    return;
+                }
+
+                // 如果没有在绘制，右键则维持原有的“平移图片”功能
                 _isPanning = true;
                 _lastPanPoint = e.GetPosition(CanvasContainer);
                 e.Pointer.Capture((IInputElement)sender);
@@ -359,11 +393,11 @@ namespace DefectVision.UI.Views
             var screenPos = e.GetPosition(CanvasContainer);
             var imgPos = ScreenToImage(screenPos);
 
+            // 矩形框
             if (VM.IsRectTool)
             {
                 _isDrawingRect = true;
                 _startPoint = imgPos; // store in image coords
-
                 _currentRect = new Rectangle
                 {
                     Stroke = new SolidColorBrush(Colors.Lime),
@@ -377,24 +411,75 @@ namespace DefectVision.UI.Views
                 e.Pointer.Capture((IInputElement)sender);
                 SetToolMode("rect");
             }
+            // 描边绘制
             else if (VM.IsPolygonTool)
             {
                 _isDrawingPolygon = true;
                 _freehandPoints.Clear();
-                _freehandPoints.Add(imgPos); // store in image coords
+                _freehandPoints.Add(imgPos);
 
                 _freehandLine = new Polyline
                 {
                     Stroke = new SolidColorBrush(Colors.Lime),
                     StrokeThickness = 2,
-                    IsHitTestVisible = false
+                    IsHitTestVisible = false,
+                    Points = new List<Point> { screenPos }
                 };
-                _freehandLine.Points = new List<Point> { screenPos };
                 AnnotationCanvas.Children.Add(_freehandLine);
                 e.Pointer.Capture((IInputElement)sender);
                 SetToolMode("polygon");
             }
+            // 折线绘制
+            else if (VM.IsPolylineTool)
+            {
+                if (_activePoints.Count == 0)
+                {
+                    _activePoints.Add(imgPos);
+                    // 创建完整轮廓线（实线）
+                    _freehandLine = new Polyline
+                    {
+                        Stroke = Brushes.Yellow,
+                        StrokeThickness = 2,
+                        IsHitTestVisible = false,
+                        Points = new List<Point> { screenPos } // 初始只有 A 点
+                    };
+                    // 创建橡皮筋预览线（虚线）
+                    _rubberBandLine = new Line
+                    {
+                        Stroke = Brushes.Yellow,
+                        StrokeThickness = 1,
+                        StrokeDashArray = new AvaloniaList<double>(new[] { 4.0, 2.0 }),
+                        StartPoint = screenPos, // 从 A 开始
+                        EndPoint = screenPos,
+                        IsHitTestVisible = false
+                    };
+        
+                    AnnotationCanvas.Children.Add(_freehandLine);
+                    AnnotationCanvas.Children.Add(_rubberBandLine);
+                    SetToolMode("polyline");
+                }
+                else
+                {   // 点击起始点附近或者双击封口
+                    var isClosing = e.ClickCount == 2 || IsNearStartPoint(screenPos);
+                    if (isClosing)
+                    {
+                        // 直接把“第一个点”的坐标加进去，而不是鼠标当前点
+                        _activePoints.Add(_activePoints[0]);
+                        FinishPolylineDrawing();
+                    }
+                    else
+                    {
+                        // === 正常添加中间点 ===
+                        _activePoints.Add(imgPos);
+                        var newPoints = _activePoints.Select(p => ImageToScreen(p.X, p.Y)).ToList();
+                        _freehandLine.Points = newPoints; 
+                        _rubberBandLine.StartPoint = screenPos;
+                        _rubberBandLine.EndPoint = screenPos;
+                    }
+                }
+            }
         }
+        
 
         private void Canvas_PointerMoved(object sender, PointerEventArgs e)
         {
@@ -407,101 +492,63 @@ namespace DefectVision.UI.Views
                 _lastPanPoint = screenPos;
                 ApplyLayout();
                 RedrawAnnotations();
+                UpdateCurrentDrawingPositions();
                 return;
             }
 
+            // 矩形更新
             if (_isDrawingRect && _currentRect != null)
             {
                 var imgPos = ScreenToImage(screenPos);
-
-                // Calculate rect in image coords
-                double ix = Math.Min(_startPoint.X, imgPos.X);
-                double iy = Math.Min(_startPoint.Y, imgPos.Y);
-                double iw = Math.Abs(imgPos.X - _startPoint.X);
-                double ih = Math.Abs(imgPos.Y - _startPoint.Y);
-
-                // Convert to screen coords for display
+                double ix = Math.Min(_startPoint.X, imgPos.X), iy = Math.Min(_startPoint.Y, imgPos.Y);
+                double iw = Math.Abs(imgPos.X - _startPoint.X), ih = Math.Abs(imgPos.Y - _startPoint.Y);
                 var sr = ImageRectToScreen(ix, iy, iw, ih);
-                Canvas.SetLeft(_currentRect, sr.X);
-                Canvas.SetTop(_currentRect, sr.Y);
-                _currentRect.Width = sr.Width;
-                _currentRect.Height = sr.Height;
+                Canvas.SetLeft(_currentRect, sr.X); Canvas.SetTop(_currentRect, sr.Y);
+                _currentRect.Width = sr.Width; _currentRect.Height = sr.Height;
             }
 
-            if (_isDrawingPolygon && _freehandLine != null)
+            // 描边绘制
+            if (_isDrawingPolygon  && _freehandLine != null)
             {
                 var imgPos = ScreenToImage(screenPos);
-                var lastImgPt = _freehandPoints[_freehandPoints.Count - 1];
-                double dist = Math.Sqrt(Math.Pow(imgPos.X - lastImgPt.X, 2) + Math.Pow(imgPos.Y - lastImgPt.Y, 2));
-
-                if (dist > 3) // min pixel distance in image coords
+                if (_freehandPoints.Count == 0 || Distance(imgPos, _freehandPoints.Last()) > 3)
                 {
                     _freehandPoints.Add(imgPos);
-
-                    // Convert all points to screen coords for display
-                    var screenPoints = new List<Point>();
-                    foreach (var pt in _freehandPoints)
-                        screenPoints.Add(ImageToScreen(pt.X, pt.Y));
-                    _freehandLine.Points = screenPoints;
+                    // 同样，重新赋值以确保 UI 刷新
+                    _freehandLine.Points = _freehandPoints.Select(p => ImageToScreen(p.X, p.Y)).ToList();
                 }
+            }
+            // 折线绘制
+            if (_activePoints.Count > 0 && _rubberBandLine != null)
+            {
+                _rubberBandLine.EndPoint = screenPos;
             }
         }
 
         private void Canvas_PointerReleased(object sender, PointerReleasedEventArgs e)
         {
-            e.Pointer.Capture(null);
-
             if (_isPanning)
             {
                 _isPanning = false;
+                e.Pointer.Capture(null);
                 return;
             }
 
-            if (_isDrawingRect && _currentRect != null)
+            if (_isDrawingRect)
             {
                 _isDrawingRect = false;
-                var screenPos = e.GetPosition(CanvasContainer);
-                var imgPos = ScreenToImage(screenPos);
-
-                double ix = Math.Min(_startPoint.X, imgPos.X);
-                double iy = Math.Min(_startPoint.Y, imgPos.Y);
-                double iw = Math.Abs(imgPos.X - _startPoint.X);
-                double ih = Math.Abs(imgPos.Y - _startPoint.Y);
-
-                AnnotationCanvas.Children.Remove(_currentRect);
-                _currentRect = null;
-
-                if (iw < 3 || ih < 3)
-                {
-                    SetToolMode("");
-                    return;
-                }
-
-                // Clamp to image bounds
-                ix = Math.Max(0, ix);
-                iy = Math.Max(0, iy);
-                if (VM != null)
-                {
-                    if (ix + iw > VM.ImageWidth) iw = VM.ImageWidth - ix;
-                    if (iy + ih > VM.ImageHeight) ih = VM.ImageHeight - iy;
-                }
-
-                VM?.AddAnnotation(ix, iy, iw, ih);
+                e.Pointer.Capture(null);
+                SubmitRect(e.GetPosition(CanvasContainer));
                 SetToolMode("");
             }
-
-            if (_isDrawingPolygon && _freehandLine != null)
+            // 描边绘制
+            else if (_isDrawingPolygon)
             {
                 _isDrawingPolygon = false;
-
+                e.Pointer.Capture(null);
                 if (_freehandPoints.Count >= 3)
-                {
-                    // 直接传递点集。注意：如果你的 VM 要求归一化坐标(0-1)，这里需要除以图片宽高
-                    // 这里暂时按像素坐标传递，请根据你 VM 的实现调整
-                    VM?.AddPolygonAnnotation([.._freehandPoints]);
-                }
-
-                CancelFreehand();
+                    VM?.AddPolygonAnnotation([.. _freehandPoints]);
+                CancelAllDrawing();
                 SetToolMode("");
             }
         }
@@ -509,23 +556,18 @@ namespace DefectVision.UI.Views
         private void Canvas_PointerWheelChanged(object sender, PointerWheelEventArgs e)
         {
             var screenPos = e.GetPosition(CanvasContainer);
-
-            // Get image point under cursor before zoom
             var imgPt = ScreenToImage(screenPos);
 
-            double oldScale = _scale;
-            if (e.Delta.Y > 0)
-                _scale = Math.Min(_scale * 1.15, 50);
-            else
-                _scale = Math.Max(_scale / 1.15, 0.01);
+            if (e.Delta.Y > 0) _scale = Math.Min(_scale * 1.15, 50);
+            else _scale = Math.Max(_scale / 1.15, 0.01);
 
-            // Recalculate offset so the image point stays under cursor
             _offsetX = screenPos.X - imgPt.X * _scale;
             _offsetY = screenPos.Y - imgPt.Y * _scale;
 
             ApplyLayout();
             VM?.UpdateZoom(_scale);
             RedrawAnnotations();
+            UpdateCurrentDrawingPositions(); // 缩放后重置正在画的线条位置
             e.Handled = true;
         }
 
@@ -534,6 +576,7 @@ namespace DefectVision.UI.Views
         private void CancelFreehand()
         {
             _isDrawingPolygon = false;
+            _isDrawingPolyline = false;
             if (_freehandLine != null)
             {
                 AnnotationCanvas.Children.Remove(_freehandLine);
@@ -549,9 +592,80 @@ namespace DefectVision.UI.Views
             if (mode == "rect")
                 TxtToolMode.Text = "[\u62D6\u62FD\u753B\u6846...]";
             else if (mode == "polygon")
-                TxtToolMode.Text = "[\u62D6\u62FD\u753B\u591A\u8FB9\u5F62...]";
+                TxtToolMode.Text = "[\u62D6\u62FD\u753B\u63CF\u8FB9...]";
+            else if (mode == "polyline")
+                TxtToolMode.Text = "[\u62D6\u62FD\u753B\u6298\u7EBF...]";
             else
                 TxtToolMode.Text = "";
+        }
+        // 判断是否在起始点附近
+        private bool IsNearStartPoint(Point currentScreenPos)
+        {
+            if (_activePoints.Count < 2) return false;
+            var startScreen = ImageToScreen(_activePoints[0].X, _activePoints[0].Y);
+            return Distance(currentScreenPos, startScreen) < 15; // 15像素磁吸距离
+        }
+        
+        private void UpdateCurrentDrawingPositions()
+        {
+            // 更新点对点模式的线条位置
+            if (_activePoints.Count > 0 && _freehandLine != null)
+            {
+                // 将所有已确定的图片像素点重新转换成当前缩放下的屏幕坐标
+                var newScreenPoints = _activePoints.Select(p => ImageToScreen(p.X, p.Y)).ToList();
+                // 更新实线轮廓
+                _freehandLine.Points = newScreenPoints;
+                // 更新虚线起点（即最后一个确定的点）
+                if (_rubberBandLine != null)
+                {
+                    _rubberBandLine.StartPoint = newScreenPoints.Last();
+                }
+            }
+        }
+        
+        private void FinishPolylineDrawing()
+        {
+            if (_activePoints.Count >= 2)
+            {
+                VM?.AddPolylineAnnotation([.. _activePoints]);
+            }
+            CancelAllDrawing();
+            SetToolMode("");
+        }
+        private double Distance(Point p1, Point p2) => Math.Sqrt(Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2));
+        //
+        private void SubmitRect(Point releasePos)
+        {
+            var imgPos = ScreenToImage(releasePos);
+            double ix = Math.Max(0, Math.Min(_startPoint.X, imgPos.X));
+            double iy = Math.Max(0, Math.Min(_startPoint.Y, imgPos.Y));
+            double iw = Math.Abs(imgPos.X - _startPoint.X);
+            double ih = Math.Abs(imgPos.Y - _startPoint.Y);
+
+            if (iw > 3 && ih > 3 && VM != null)
+            {
+                if (ix + iw > VM.ImageWidth) iw = VM.ImageWidth - ix;
+                if (iy + ih > VM.ImageHeight) ih = VM.ImageHeight - iy;
+                VM.AddAnnotation(ix, iy, iw, ih);
+            }
+            CancelAllDrawing();
+        }
+        
+        // 取消所有正在绘制的
+        private void CancelAllDrawing()
+        {
+            _isDrawingRect = false;
+            _isDrawingPolygon = false;
+    
+            AnnotationCanvas.Children.Remove(_freehandLine);
+            AnnotationCanvas.Children.Remove(_rubberBandLine);
+            AnnotationCanvas.Children.Remove(_currentRect);
+
+            _freehandLine = null;
+            _rubberBandLine = null;
+            _currentRect = null;
+            _freehandPoints.Clear();
+            _activePoints.Clear();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:DefectVision.UI.ViewModels"
+             xmlns:i="https://github.com/projektanker/icons.avalonia"
              x:Class="DefectVision.UI.Views.AnnotationView"
              x:DataType="vm:AnnotationViewModel">
 
@@ -9,10 +10,9 @@
         <!-- ===== Left ===== -->
         <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto,Auto">
 
-            <Border Grid.Row="0" Background="#E3F2FD" Padding="8,6">
+            <Border Grid.Row="0" Background="{StaticResource PanelLightBlueBrush}" Classes="panel-header">
                 <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock x:Name="LblImageList" FontWeight="Bold" FontSize="13"
-                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="LblImageList" VerticalAlignment="Center" Classes="h1" />
                     <Button Grid.Column="1" x:Name="BtnImport" FontSize="11"
                             Command="{Binding ImportImagesCommand}" Padding="8,2" />
                 </Grid>
@@ -31,14 +31,13 @@
                                        FontSize="11" TextTrimming="CharacterEllipsis"
                                        VerticalAlignment="Center" />
                             <TextBlock Grid.Column="2" Text="{Binding AnnotationCount}"
-                                       FontSize="10" Foreground="#888"
-                                       VerticalAlignment="Center" Margin="4,0,0,0" />
+                                       VerticalAlignment="Center" Margin="4,0,0,0" Classes="secondary" />
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <Border Grid.Row="2" Padding="8,4" Background="#F5F5F5">
+            <Border Grid.Row="2" Classes="panel-footer">
                 <StackPanel Spacing="4">
                     <TextBlock FontSize="11">
                         <Run x:Name="RunLabeledPrefix" />
@@ -51,9 +50,9 @@
             </Border>
 
             <!-- ★ Class list: use ListBox so user can click to select ★ -->
-            <Border Grid.Row="3" Padding="8" Background="#FAFAFA" BorderBrush="#DDD" BorderThickness="0,1,0,0">
+            <Border Grid.Row="3" Padding="8" Background="{StaticResource PanelExtraLightGrayBrush}" BorderBrush="{StaticResource BorderLightGrayBrush}" BorderThickness="0,1,0,0">
                 <StackPanel Spacing="4">
-                    <TextBlock x:Name="LblDefectClasses" FontWeight="Bold" FontSize="12" />
+                    <TextBlock x:Name="LblDefectClasses" Text="Defect Classes" FontWeight="Bold" FontSize="12" />
 
                     <ListBox ItemsSource="{Binding ClassList}"
                              SelectedItem="{Binding SelectedClassItem}"
@@ -70,7 +69,7 @@
                                     <TextBlock Grid.Column="1" Text="{Binding Name}"
                                                FontSize="12" VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="2" Text="{Binding Shortcut}"
-                                               FontSize="10" Foreground="#999"
+                                               FontSize="10" Foreground="{StaticResource TextTertiaryBrush}"
                                                VerticalAlignment="Center" />
                                 </Grid>
                             </DataTemplate>
@@ -84,41 +83,74 @@
         </Grid>
 
         <!-- ===== Center ===== -->
-        <Grid Grid.Column="1" Background="#1E1E1E">
+        <Grid Grid.Column="1" Background="{StaticResource CanvasBackgroundBrush}">
 
-            <Border VerticalAlignment="Top" ZIndex="10" Background="#CC333333"
-                    Padding="8,4" CornerRadius="0,0,4,4">
-                <StackPanel Orientation="Horizontal" Spacing="4">
+            <Border VerticalAlignment="Top" ZIndex="10" Background="{StaticResource ToolbarBackgroundBrush}"
+                    Padding="4,2" CornerRadius="0,0,4,4">
+                <StackPanel Orientation="Horizontal" Spacing="2">
                     <RadioButton x:Name="RbRect" GroupName="Tool"
                                  IsChecked="{Binding IsRectTool}"
-                                 Foreground="White" FontSize="12" />
+                                 Classes="tool-button" Foreground="{StaticResource TextLightBrush}">
+                        <StackPanel>
+                            <i:Icon Classes="icon" Value="mdi-square-outline" />
+                            <TextBlock Text="矩形框" />   
+                        </StackPanel>
+                    </RadioButton>
+
                     <RadioButton x:Name="RbPolygon" GroupName="Tool"
                                  IsChecked="{Binding IsPolygonTool}"
-                                 Foreground="White" FontSize="12" />
-                    <RadioButton x:Name="RbPan" GroupName="Tool"
-                                 IsChecked="{Binding IsPanTool}"
-                                 Foreground="White" FontSize="12" />
+                                 Classes="tool-button" Foreground="{StaticResource TextLightBrush}">
+                        <StackPanel>
+                            <i:Icon Classes="icon" Value="mdi-circle-edit-outline" />
+                            <TextBlock Text="描边"/>   
+                        </StackPanel>
+                    </RadioButton>
 
-                    <Border Width="1" Background="#555" Margin="8,2" />
+                    <RadioButton x:Name="RbPolyline" GroupName="Tool"
+                                 IsChecked="{Binding IsPolylineTool}"
+                                 Classes="tool-button" Foreground="{StaticResource TextLightBrush}">
+                        <StackPanel>
+                            <i:Icon Classes="icon" Value="mdi-vector-polygon" />
+                            <TextBlock Text="折线"/>   
+                        </StackPanel>
+                    </RadioButton>
+
+                    <Border Width="1" Background="{StaticResource SeparatorBrush}" Margin="8,4" />
 
                     <Button x:Name="BtnUndo" Command="{Binding UndoCommand}"
-                            Background="Transparent" Foreground="White" FontSize="12" />
+                            Classes="tool-button" Background="Transparent" Foreground="{StaticResource TextLightBrush}">
+                        <StackPanel>
+                            <i:Icon Classes="icon" Value="mdi-undo" />
+                            <TextBlock Text="撤销"/>
+                        </StackPanel>
+                    </Button>
                     <Button x:Name="BtnRedo" Command="{Binding RedoCommand}"
-                            Background="Transparent" Foreground="White" FontSize="12" />
+                            Classes="tool-button" Background="Transparent" Foreground="{StaticResource TextLightBrush}">
+                        <StackPanel>
+                            <i:Icon Classes="icon" Value="mdi-redo" />
+                            <TextBlock Text="重做" />
+                        </StackPanel>
+                    </Button>
                     <Button x:Name="BtnDeleteSel" Command="{Binding DeleteSelectedCommand}"
-                            Background="Transparent" Foreground="#FF6B6B" FontSize="12" />
+                            Classes="tool-button" Background="Transparent" Foreground="{StaticResource DeleteButtonForegroundBrush}">
+                        <StackPanel>
+                            <i:Icon Classes="icon" Value="mdi-delete-outline"></i:Icon>
+                            <TextBlock Text="删除" />
+                        </StackPanel>
+                    </Button>
 
-                    <Border Width="1" Background="#555" Margin="8,2" />
+                    <Border Width="1" Background="{StaticResource SeparatorBrush}" Margin="8,4" />
 
-                    <TextBlock VerticalAlignment="Center" Foreground="#AAA" FontSize="11">
-                        <Run x:Name="RunCurrentClass" />
-                        <Run Text="{Binding SelectedClassName}" Foreground="#4FC3F7" FontWeight="Bold" />
-                    </TextBlock>
+                    <StackPanel VerticalAlignment="Center" Margin="8,0" Spacing="2">
+                         <TextBlock Foreground="{StaticResource TextMutedBrush}" FontSize="10" Text="当前类别" />
+                         <TextBlock Text="{Binding SelectedClassName}" Foreground="{StaticResource HighlightBrush}" 
+                                    FontWeight="Bold" FontSize="12" HorizontalAlignment="Center"/>
+                    </StackPanel>
 
-                    <Border Width="1" Background="#555" Margin="8,2" />
+                    <Border Width="1" Background="{StaticResource SeparatorBrush}" Margin="8,4" />
 
                     <TextBlock x:Name="TxtToolHint" VerticalAlignment="Center"
-                               Foreground="#888" FontSize="11" />
+                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="8,0" />
                 </StackPanel>
             </Border>
 
@@ -134,21 +166,21 @@
                 </Canvas>
             </Border>
 
-            <Border VerticalAlignment="Bottom" ZIndex="10" Background="#80000000" Padding="8,4">
+            <Border VerticalAlignment="Bottom" ZIndex="10" Background="{StaticResource InfoBarBackgroundBrush}" Padding="8,4">
                 <StackPanel Orientation="Horizontal" Spacing="16">
-                    <TextBlock Foreground="#AAA" FontSize="11">
+                    <TextBlock Classes="muted">
                         <Run x:Name="RunFileLabel" />
                         <Run Text="{Binding CurrentFileName}" />
                     </TextBlock>
-                    <TextBlock Foreground="#AAA" FontSize="11">
+                    <TextBlock Classes="muted">
                         <Run x:Name="RunSizeLabel" />
                         <Run Text="{Binding ImageSizeText}" />
                     </TextBlock>
-                    <TextBlock Foreground="#AAA" FontSize="11">
+                    <TextBlock Classes="muted">
                         <Run x:Name="RunZoomLabel" />
                         <Run Text="{Binding ZoomPercentText}" />
                     </TextBlock>
-                    <TextBlock x:Name="TxtToolMode" Foreground="#4FC3F7" FontSize="11" Margin="16,0,0,0" />
+                    <TextBlock x:Name="TxtToolMode" Foreground="{StaticResource HighlightBrush}" FontSize="11" Margin="16,0,0,0" />
                 </StackPanel>
             </Border>
         </Grid>
@@ -156,8 +188,8 @@
         <!-- ===== Right ===== -->
         <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto">
 
-            <Border Grid.Row="0" Background="#E8F5E9" Padding="8,6">
-                <TextBlock FontSize="13" FontWeight="Bold" Foreground="#2E7D32">
+            <Border Grid.Row="0" Background="{StaticResource PanelLightGreenBrush}" Classes="panel-header">
+                <TextBlock Foreground="{StaticResource TextGreenBrush}" Classes="h1">
                     <Run x:Name="RunAnnotListPrefix" />
                     <Run Text="{Binding CurrentAnnotations.Count}" />
                     <Run Text=")" />
@@ -168,7 +200,7 @@
                      SelectedItem="{Binding SelectedAnnotation}">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="vm:AnnotationDisplayItem">
-                        <Border Padding="6,4" BorderBrush="#EEE" BorderThickness="0,0,0,1">
+                        <Border Padding="6,4" BorderBrush="{StaticResource BorderExtraLightGrayBrush}" BorderThickness="0,0,0,1">
                             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
                                 <Border Grid.Column="0" Grid.RowSpan="2"
                                         Width="12" Height="12" CornerRadius="2"
@@ -178,11 +210,11 @@
                                            Text="{Binding ClassName}" FontWeight="SemiBold"
                                            FontSize="12" />
                                 <TextBlock Grid.Column="1" Grid.Row="1"
-                                           Text="{Binding BBoxText}" FontSize="10"
-                                           Foreground="#888" />
+                                           Text="{Binding BBoxText}"
+                                           Classes="secondary" />
                                 <Button Grid.Column="2" Grid.RowSpan="2"
                                         Content="X" FontSize="10"
-                                        Background="Transparent" Foreground="#CC0000"
+                                        Background="Transparent" Foreground="{StaticResource DeleteButtonRedBrush}"
                                         Command="{Binding $parent[ListBox].((vm:AnnotationViewModel)DataContext).DeleteAnnotationCommand}"
                                         CommandParameter="{Binding}"
                                         VerticalAlignment="Center" Padding="4,2" />
@@ -194,7 +226,7 @@
 
              <StackPanel Grid.Row="2" Spacing="4" Margin="8">
               <TextBlock Text="{Binding StatusMessage}" FontSize="11"
-                           Foreground="#1565C0" TextWrapping="Wrap"
+                           Foreground="{StaticResource ButtonBlueBrush}" TextWrapping="Wrap"
                            IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                            Margin="0,0,0,4" />
                  <Button x:Name="BtnMarkComplete" HorizontalAlignment="Stretch"
@@ -209,10 +241,10 @@
                 <Separator Margin="0,4" />
                 <Button x:Name="BtnImportLabelMe" HorizontalAlignment="Stretch"
                         Click="OnImportLabelMeClick"
-                        Background="#1565C0" Foreground="White" />
+                        Background="{StaticResource ButtonBlueBrush}" Foreground="{StaticResource TextLightBrush}" />
                                  <Button x:Name="BtnImportCustomJson" HorizontalAlignment="Stretch"
                         Click="OnImportCustomJsonClick"
-                        Background="#6A1B9A" Foreground="White" />
+                        Background="{StaticResource ButtonPurpleBrush}" Foreground="{StaticResource TextLightBrush}" />
             </StackPanel>
         </Grid>
     </Grid>
